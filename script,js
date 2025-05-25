@@ -1,0 +1,101 @@
+/ script.js
+/**
+ * Initializes the Kanban board
+ * @param {Array} tasks - Array of task objects
+ */
+function initializeBoard(tasks) {
+    tasks.forEach(task => createTaskElement(task));
+  }
+  
+  /**
+   * Creates a DOM element for a task
+   * @param {Object} task - Task object
+   * @returns {HTMLElement} Task element
+   */
+  function createTaskElement(task) {
+    const taskElement = document.createElement('div');
+    taskElement.className = 'task-div';
+    taskElement.innerHTML = `
+      <h3 class="task-title">${task.title}</h3>
+      <p class="task-description">${task.description}</p>
+    `;
+    taskElement.dataset.taskId = task.id;
+    taskElement.addEventListener('click', () => openTaskModal(task));
+    getColumnByStatus(task.status).appendChild(taskElement);
+    return taskElement;
+  }
+  
+  /**
+   * Opens the task modal with task details
+   * @param {Object} task - Task object
+   */
+  function openTaskModal(task) {
+    const { id, title, description, status } = task;
+    currentTaskId = id;
+    
+    document.getElementById('editTitle').value = title;
+    document.getElementById('editDescription').value = description;
+    document.getElementById('editStatus').value = status;
+    
+    document.getElementById('modalBackdrop').style.display = 'flex';
+  }
+  
+  /**
+   * Updates task details and DOM
+   */
+  function updateTask() {
+    const updatedTask = {
+      id: currentTaskId,
+      title: document.getElementById('editTitle').value.trim(),
+      description: document.getElementById('editDescription').value.trim(),
+      status: document.getElementById('editStatus').value
+    };
+  
+    // Update DOM
+    const taskElement = document.querySelector(`[data-task-id="${currentTaskId}"]`);
+    taskElement.querySelector('.task-title').textContent = updatedTask.title;
+    taskElement.querySelector('.task-description').textContent = updatedTask.description;
+    
+    // Move to correct column if status changed
+    if (updatedTask.status !== initialTasks.find(t => t.id === currentTaskId).status) {
+      taskElement.remove();
+      getColumnByStatus(updatedTask.status).appendChild(taskElement);
+    }
+  
+    // Update initial data
+    const taskIndex = initialTasks.findIndex(t => t.id === currentTaskId);
+    initialTasks[taskIndex] = updatedTask;
+  }
+  
+  /**
+   * Gets column element by status
+   * @param {string} status - Task status
+   * @returns {HTMLElement} Column element
+   */
+  function getColumnByStatus(status) {
+    return document.querySelector(`[data-status="${status}"] .tasks-container`);
+  }
+  
+  // Event Listeners
+  document.getElementById('modalBackdrop').addEventListener('click', (e) => {
+    if (e.target.classList.contains('modal-backdrop') || 
+       e.target.classList.contains('close-modal')) {
+      document.getElementById('modalBackdrop').style.display = 'none';
+    }
+  });
+  
+  document.getElementById('saveChanges').addEventListener('click', () => {
+    updateTask();
+    document.getElementById('modalBackdrop').style.display = 'none';
+  });
+  
+  // Initialize board when DOM loads
+  document.addEventListener('DOMContentLoaded', () => initializeBoard(initialTasks));
+
+  import { initializeBoard, createTask } from './taskManager.js';
+import { initModals } from './modals.js';
+
+document.addEventListener('DOMContentLoaded', () => {
+  initializeBoard();
+  initModals();
+});
